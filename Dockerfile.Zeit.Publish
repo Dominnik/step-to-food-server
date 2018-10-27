@@ -1,7 +1,0 @@
-FROM microsoft/dotnet:2.1-aspnetcore-runtime-alpine
-LABEL name="TestDocker"
-ENTRYPOINT ["dotnet", "TestDocker.dll"]
-ARG source=.
-WORKDIR /app
-EXPOSE 80
-COPY $source .
