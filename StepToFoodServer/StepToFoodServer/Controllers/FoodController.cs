@@ -32,6 +32,7 @@ namespace StepToFoodServer.Controllers
         [HttpGet("{id}")]
         public string Get(int id)
         {
+            //Request.Query
             return "food";
         }
 

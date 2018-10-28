@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace StepToFoodServer.Repositories
@@ -42,6 +43,11 @@ namespace StepToFoodServer.Repositories
             var entity = Get(id);
             context.Users.Remove(entity);
             context.SaveChanges();
+        }
+
+        public List<User> Filter(Expression<Func<User, bool>> predicate)
+        {
+            return context.Users.Where(predicate).DefaultIfEmpty().ToList();
         }
     }
 }

@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using StepToFoodServer.Database;
 using StepToFoodServer.Database.Configurations;
 using StepToFoodServer.Models;
@@ -34,7 +28,8 @@ namespace StepToFoodServer
             services.AddSingleton<IFoodConfiguration, ProductFoodConfiguration>();
             services.AddSingleton<IFoodConfiguration, LikeFoodConfiguration>();
 
-            services.AddDbContext<FoodContext>(options => options.UseSqlite(@"Data Source=StepToFood.db"));
+            var connection = Configuration["Sqlite:Connection"];
+            services.AddDbContext<FoodContext>(options => options.UseSqlite(connection));
             
             services.AddScoped(typeof(IRepository<User>), typeof(UserRepository));
             services.AddScoped(typeof(IRepository<Food>), typeof(FoodRepository));
@@ -50,7 +45,6 @@ namespace StepToFoodServer
             {
                 app.UseDeveloperExceptionPage();
             }
-
             app.UseMvc();
         }
     }

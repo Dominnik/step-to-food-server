@@ -9,7 +9,13 @@ namespace StepToFoodServer.Models
     public class User : Entity
     {
         public string Name { get; set; }
-        
+
+        [JsonIgnore]
+        public string Login { get; set; }
+
+        [JsonIgnore]
+        public string Password { get; set; }
+
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string Avatar { get; set; }
 
@@ -21,5 +27,14 @@ namespace StepToFoodServer.Models
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public ICollection<LikeFood> LikeFoods { get; set; }
+
+        public User() { }
+
+        public User(string name, string login, string password)
+        {
+            Name = name;
+            Login = login;
+            Password = password;
+        }
     }
 }
