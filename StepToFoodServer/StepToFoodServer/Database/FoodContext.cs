@@ -16,7 +16,7 @@ namespace StepToFoodServer
         public FoodContext(DbContextOptions<FoodContext> options, IEnumerable<IFoodConfiguration> configurations) : base(options)
         {
             this.configurations = configurations;
-            Database.EnsureCreated();
+            Database.Migrate();
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
