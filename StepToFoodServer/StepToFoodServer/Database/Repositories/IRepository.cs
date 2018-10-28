@@ -6,7 +6,16 @@ using System.Threading.Tasks;
 
 namespace StepToFoodServer.Repositories
 {
-    public class IRepository<T> where T : Entity
+    public interface IRepository<T> where T : Entity
     {
+        List<T> GetAll();
+
+        T Get(long id);
+
+        void Add(T user);
+
+        void Update(T user);
+
+        void Delete(long id);
     }
 }
