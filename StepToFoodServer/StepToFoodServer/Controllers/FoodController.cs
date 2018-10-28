@@ -3,12 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using StepToFoodServer.Database;
+using StepToFoodServer.Models;
+using StepToFoodServer.Repositories;
 
 namespace StepToFoodServer.Controllers
 {
     [Route("api/[controller]")]
     public class FoodController : Controller
     {
+        private readonly IBusinessLogicLayer businessLogicLayer;
+        private readonly IRepository<Food> foodRepository;
+
+        public FoodController(IBusinessLogicLayer businessLogicLayer, IRepository<Food> foodRepository)
+        {
+            this.businessLogicLayer = businessLogicLayer;
+            this.foodRepository = foodRepository;
+        }
+
         // GET api/food
         [HttpGet]
         public IEnumerable<string> Get()

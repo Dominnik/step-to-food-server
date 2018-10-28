@@ -4,12 +4,24 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using StepToFoodServer.Database;
+using StepToFoodServer.Models;
+using StepToFoodServer.Repositories;
 
 namespace StepToFoodServer.Controllers
 {
     [Route("api/[controller]")]
     public class ProductController : Controller
     {
+        private readonly IBusinessLogicLayer businessLogicLayer;
+        private readonly IRepository<Product> productRepository;
+
+        public ProductController(IBusinessLogicLayer businessLogicLayer, IRepository<Product> productRepository)
+        {
+            this.businessLogicLayer = businessLogicLayer;
+            this.productRepository = productRepository;
+        }
+
         // GET api/product
         [HttpGet]
         public IEnumerable<string> Get()
