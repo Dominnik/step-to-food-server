@@ -27,5 +27,15 @@ namespace StepToFoodServer.Database
         void AddFoodWithProducts(User user, Food food);
 
         void LikeForFood(User user, int foodId, bool hasLike);
+
+        void UpdateFoodWithProducts(Food food);
+
+        List<Food> FindFoodsByProducts(int startId, int size, List<int> productIds);
+
+        List<Food> SearchAddedFoods(int userId, string searchName, int startId, int size);
+
+        List<Food> SearchLikeFoods(int userId, string searchName, int startId, int size);
+
+        List<Food> SearchRecommendedFoods(int userId, string searchName, int startId, int size);
     }
 }

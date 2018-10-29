@@ -128,14 +128,62 @@ namespace StepToFoodServer.Database
             foodRepository.Add(food);
         }
 
+        public void UpdateFoodWithProducts(Food food)
+        {
+            Food foodFromDb = foodRepository.Get(food.Id);
+            foodFromDb.Image = food.Image;
+            foodFromDb.Name = food.Name;
+            foodFromDb.Description = food.Description;
+            foodFromDb.Calorie = food.Calorie;
+            foodFromDb.Protein = food.Protein;
+            foodFromDb.Fat = food.Fat;
+            foodFromDb.Carbohydrates = food.Carbohydrates;
+            foodFromDb.Products = food.Products;
+            SetProductFoods(foodFromDb);
+        }
+
         public void LikeForFood(User user, int foodId, bool hasLike)
         {
             Food food = foodRepository.Get(foodId);
-
             LikeFood likeFood = new LikeFood(user, food);
             user.LikeFoods.Add(likeFood);
             //food.LikeFoods.Add(likeFood);
             userRepository.Add(user);
+        }
+
+        public List<Food> FindFoodsByProducts(int startId, int size, List<int> productIds)
+        {
+            List<Food> foods = foodRepository.Filter(food => FoodContainsAnyProduct(food, productIds));
+            foreach (var food in foods)
+            {
+                SetProducts(food);
+                foreach (var product in food.Products)
+                    product.IncludedInSearch = productIds.Contains(product.Id);
+            }
+            return foods
+                .OrderBy(food => food.Products.Where(product => (bool)product.IncludedInSearch))
+                .ThenBy(food => food.Id)
+                .Where(food => food.Id >= startId)
+                .Take(size)
+                .ToList();
+        }
+
+        public List<Food> SearchAddedFoods(int userId, string searchName, int startId, int size)
+        {
+            //TODO
+            return null;
+        }
+
+        public List<Food> SearchLikeFoods(int userId, string searchName, int startId, int size)
+        {
+            //TODO
+            return null;
+        }
+
+        public List<Food> SearchRecommendedFoods(int userId, string searchName, int startId, int size)
+        {
+            //TODO
+            return null;
         }
 
         private bool LoginExists(string login)
@@ -148,12 +196,33 @@ namespace StepToFoodServer.Database
             return userRepository.Filter(user => user.Login == login && user.Password == password).Count != 0;
         }
 
+        private bool FoodContainsAnyProduct(Food food, List<int> productIds)
+        {
+            return food.ProductFoods.Any(productFood => productIds.Contains(productFood.ProductId));
+        }
+
         private void SetProducts(Food food)
         {
             food.Products = productRepository
                 .Filter(product => product.ProductFoods.Any(elem => elem.FoodId == food.Id))
                 .DefaultIfEmpty()
                 .ToList();
+        }
+
+        private void SetProductFoods(Food food)
+        {
+            List<ProductFood> productFoods = new List<ProductFood>();
+            foreach (Product product in food.Products)
+            {
+                Product productFromDb = productRepository.Get(product.Id);
+                var productFood = food.ProductFoods
+                    .Where(elem => elem.ProductId == product.Id)
+                    .SingleOrDefault();
+
+                productFoods.Add(productFood == null ? 
+                    new ProductFood(productFromDb, food) : productFood);
+            }
+            food.ProductFoods = productFoods;
         }
     }
 }
