@@ -82,7 +82,7 @@ namespace StepToFoodServer.Controllers
             BaseResponse<User> response = null;
             try
             {
-                User user = businessLogicLayer.Login(token);
+                User user = businessLogicLayer.Check(token);
                 response = new BaseResponse<User>(user);
             }
             catch (Exception ex)

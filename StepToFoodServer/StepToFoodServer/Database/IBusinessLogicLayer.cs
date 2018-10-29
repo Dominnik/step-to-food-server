@@ -12,10 +12,20 @@ namespace StepToFoodServer.Database
 
         User Login(string login, string password);
 
-        User Login(string token);
+        User Check(string token);
 
         void ChangePassword(string token, string password, string newPassword);
 
         void Terminate(string token);
+
+        List<Product> FindProductsByFood(int foodId);
+
+        List<Product> FindProductsByName(string name);
+
+        Food FoodWithProducts(int foodId);
+
+        void AddFoodWithProducts(User user, Food food);
+
+        void LikeForFood(User user, int foodId, bool hasLike);
     }
 }

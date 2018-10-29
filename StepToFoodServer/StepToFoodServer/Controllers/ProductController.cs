@@ -7,10 +7,11 @@ using Microsoft.AspNetCore.Mvc;
 using StepToFoodServer.Database;
 using StepToFoodServer.Models;
 using StepToFoodServer.Repositories;
+using StepToFoodServer.Response;
 
 namespace StepToFoodServer.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class ProductController : Controller
     {
         private readonly IBusinessLogicLayer businessLogicLayer;
@@ -22,36 +23,75 @@ namespace StepToFoodServer.Controllers
             this.productRepository = productRepository;
         }
 
-        // GET api/product
         [HttpGet]
-        public IEnumerable<string> Get()
+        public BaseResponse<Product> Get()
         {
-            return new string[] { "product1", "product2" };
+            BaseResponse<Product> response = null;
+            try
+            {
+                int productId = int.Parse(Request.Query["productId"]);
+                Product product = productRepository.Get(productId);
+                response = new BaseResponse<Product>(product);
+            }
+            catch (Exception ex)
+            {
+                response = new BaseResponse<Product>();
+                response.Error = ex.Message;
+            }
+            return response;
         }
 
-        // GET api/product/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        [HttpGet("all")]
+        public BaseResponse<List<Product>> GetAll()
         {
-            return "product";
+            BaseResponse<List<Product>> response = null;
+            try
+            {
+                List<Product> products = productRepository.GetAll();
+                response = new BaseResponse<List<Product>>(products);
+            }
+            catch (Exception ex)
+            {
+                response = new BaseResponse<List<Product>>();
+                response.Error = ex.Message;
+            }
+            return response;
         }
 
-        // POST api/product
-        [HttpPost]
-        public void Post([FromBody]string value)
+        [HttpGet("search/food")]
+        public BaseResponse<List<Product>> GetByFood()
         {
+            BaseResponse<List<Product>> response = null;
+            try
+            {
+                int foodId = int.Parse(Request.Query["search"]);
+                List<Product> products = businessLogicLayer.FindProductsByFood(foodId);
+                response = new BaseResponse<List<Product>>(products);
+            }
+            catch (Exception ex)
+            {
+                response = new BaseResponse<List<Product>>();
+                response.Error = ex.Message;
+            }
+            return response;
         }
 
-        // PUT api/product/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
+        [HttpGet("search/name")]
+        public BaseResponse<List<Product>> GetByName()
         {
-        }
-
-        // DELETE api/product/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
+            BaseResponse<List<Product>> response = null;
+            try
+            {
+                string name = Request.Query["search"];
+                List<Product> products = businessLogicLayer.FindProductsByName(name);
+                response = new BaseResponse<List<Product>>(products);
+            }
+            catch (Exception ex)
+            {
+                response = new BaseResponse<List<Product>>();
+                response.Error = ex.Message;
+            }
+            return response;
         }
     }
 }

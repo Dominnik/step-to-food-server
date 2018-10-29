@@ -6,10 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 using StepToFoodServer.Database;
 using StepToFoodServer.Models;
 using StepToFoodServer.Repositories;
+using StepToFoodServer.Response;
 
 namespace StepToFoodServer.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class FoodController : Controller
     {
         private readonly IBusinessLogicLayer businessLogicLayer;
@@ -20,38 +21,100 @@ namespace StepToFoodServer.Controllers
             this.businessLogicLayer = businessLogicLayer;
             this.foodRepository = foodRepository;
         }
-
-        // GET api/food
+        
         [HttpGet]
-        public IEnumerable<string> Get()
+        public BaseResponse<Food> Get()
         {
-            return new string[] { "food1", "food2" };
+            BaseResponse<Food> response = null;
+            try
+            {
+                int foodId = int.Parse(Request.Query["foodId"]);
+                Food food = businessLogicLayer.FoodWithProducts(foodId);
+                response = new BaseResponse<Food>(food);
+            }
+            catch (Exception ex)
+            {
+                response = new BaseResponse<Food>();
+                response.Error = ex.Message;
+            }
+            return response;
         }
 
-        // GET api/food/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        [HttpGet("get/image")]
+        public BaseResponse<FileContentResult> GetImage()
         {
-            //Request.Query
-            return "food";
+            BaseResponse<FileContentResult> response = null;
+            try
+            {
+                int foodId = int.Parse(Request.Query["foodId"]);
+                byte[] image = Convert.FromBase64String(foodRepository.Get(foodId).Image);
+                response = new BaseResponse<FileContentResult>(File(image, "image/jpeg"));
+            }
+            catch (Exception ex)
+            {
+                response = new BaseResponse<FileContentResult> { Error = ex.Message };
+            }
+            return response;
         }
 
-        // POST api/food
-        [HttpPost]
-        public void Post([FromBody]string value)
+        [HttpPost("add")]
+        public BaseResponse<int> Add([FromBody]Food food)
         {
+            BaseResponse<int> response = null;
+            try
+            {
+                string token = Request.Headers["Auth"];
+                User user = businessLogicLayer.Check(token);
+
+                businessLogicLayer.AddFoodWithProducts(user, food);
+                response = new BaseResponse<int>(0);
+            }
+            catch (Exception ex)
+            {
+                response = new BaseResponse<int> { Error = ex.Message };
+            }
+            return response;
         }
 
-        // PUT api/food/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
+        [HttpGet("remove")]
+        public BaseResponse<int> Remove()
         {
+            BaseResponse<int> response = null;
+            try
+            {
+                string token = Request.Headers["Auth"];
+                businessLogicLayer.Check(token);
+
+                int foodId = int.Parse(Request.Query["foodId"]);
+                foodRepository.Delete(foodId);
+                response = new BaseResponse<int>(0);
+            }
+            catch (Exception ex)
+            {
+                response = new BaseResponse<int> { Error = ex.Message };
+            }
+            return response;
         }
 
-        // DELETE api/food/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        [HttpGet("like")]
+        public BaseResponse<int> Like()
         {
+            BaseResponse<int> response = null;
+            try
+            {
+                string token = Request.Headers["Auth"];
+                User user = businessLogicLayer.Check(token);
+
+                int foodId = int.Parse(Request.Query["foodId"]);
+                bool hasLike = bool.Parse(Request.Query["hasLike"]);
+                businessLogicLayer.LikeForFood(user, foodId, hasLike);
+                response = new BaseResponse<int>(0);
+            }
+            catch (Exception ex)
+            {
+                response = new BaseResponse<int> { Error = ex.Message };
+            }
+            return response;
         }
     }
 }
