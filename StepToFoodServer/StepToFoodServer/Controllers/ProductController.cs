@@ -35,8 +35,7 @@ namespace StepToFoodServer.Controllers
             }
             catch (Exception ex)
             {
-                response = new BaseResponse<Product>();
-                response.Error = ex.Message;
+                response = new BaseResponse<Product> { Error = ex.Message };
             }
             return response;
         }
@@ -52,8 +51,7 @@ namespace StepToFoodServer.Controllers
             }
             catch (Exception ex)
             {
-                response = new BaseResponse<List<Product>>();
-                response.Error = ex.Message;
+                response = new BaseResponse<List<Product>> { Error = ex.Message };
             }
             return response;
         }
@@ -70,8 +68,7 @@ namespace StepToFoodServer.Controllers
             }
             catch (Exception ex)
             {
-                response = new BaseResponse<List<Product>>();
-                response.Error = ex.Message;
+                response = new BaseResponse<List<Product>> { Error = ex.Message };
             }
             return response;
         }
@@ -82,14 +79,13 @@ namespace StepToFoodServer.Controllers
             BaseResponse<List<Product>> response = null;
             try
             {
-                string name = Request.Query["search"];
+                string name = (string)Request.Query["search"] ?? "";
                 List<Product> products = businessLogicLayer.FindProductsByName(name);
                 response = new BaseResponse<List<Product>>(products);
             }
             catch (Exception ex)
             {
-                response = new BaseResponse<List<Product>>();
-                response.Error = ex.Message;
+                response = new BaseResponse<List<Product>> { Error = ex.Message };
             }
             return response;
         }

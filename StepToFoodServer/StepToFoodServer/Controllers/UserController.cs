@@ -38,8 +38,7 @@ namespace StepToFoodServer.Controllers
             }
             catch (Exception ex)
             {
-                response = new BaseResponse<User>();
-                response.Error = ex.Message;
+                response = new BaseResponse<User> { Error = ex.Message };
             }
             return response;
         }

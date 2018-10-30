@@ -159,12 +159,12 @@ namespace StepToFoodServer.Controllers
             try
             {
                 int userId = int.Parse(Request.Query["userId"]);
-                int startId = int.Parse(Request.Query["startId"]);
+                int start = int.Parse(Request.Query["start"]);
                 int size = int.Parse(Request.Query["size"]);
-                string searchName = Request.Query["searchName"];
+                string searchName = (string)Request.Query["searchName"] ?? "";
                 FoodType foodType = (FoodType)Enum.Parse(typeof(FoodType), Request.Query["foodType"]);
 
-                List<Food> foods = TypeBasedSearchFoods(foodType, userId, searchName, startId, size);
+                List<Food> foods = TypeBasedSearchFoods(foodType, userId, searchName, start, size);
                 response = new BaseResponse<List<Food>>(foods);
             }
             catch (Exception ex)
@@ -180,10 +180,10 @@ namespace StepToFoodServer.Controllers
             BaseResponse<List<Food>> response = null;
             try
             {
-                int startId = int.Parse(Request.Query["startId"]);
+                int start = int.Parse(Request.Query["start"]);
                 int size = int.Parse(Request.Query["size"]);
 
-                List<Food> foods = businessLogicLayer.FindFoodsByProducts(startId, size, productIds);
+                List<Food> foods = businessLogicLayer.FindFoodsByProducts(start, size, productIds);
                 response = new BaseResponse<List<Food>>(foods);
             }
             catch (Exception ex)
@@ -193,19 +193,19 @@ namespace StepToFoodServer.Controllers
             return response;
         }
 
-        private List<Food> TypeBasedSearchFoods(FoodType foodType, int userId, string searchName, int startId, int size)
+        private List<Food> TypeBasedSearchFoods(FoodType foodType, int userId, string searchName, int start, int size)
         {
             List<Food> foods = null;
             switch (foodType)
             {
                 case FoodType.ADDED:
-                        foods = businessLogicLayer.SearchAddedFoods(userId, searchName, startId, size);
+                        foods = businessLogicLayer.SearchAddedFoods(userId, searchName, start, size);
                         break;
                 case FoodType.LIKE:
-                        foods = businessLogicLayer.SearchLikeFoods(userId, searchName, startId, size);
+                        foods = businessLogicLayer.SearchLikeFoods(userId, searchName, start, size);
                         break;
                 case FoodType.RECOMMENDED:
-                        foods = businessLogicLayer.SearchRecommendedFoods(userId, searchName, startId, size);
+                        foods = businessLogicLayer.SearchRecommendedFoods(userId, searchName, start, size);
                         break;
                 case FoodType.COMPOSED:
                     throw new MissingMethodException("Please, use 'food/search/products' api");

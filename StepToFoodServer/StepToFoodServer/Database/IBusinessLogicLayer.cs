@@ -30,12 +30,12 @@ namespace StepToFoodServer.Database
 
         void UpdateFoodWithProducts(Food food);
 
-        List<Food> FindFoodsByProducts(int startId, int size, List<int> productIds);
+        List<Food> FindFoodsByProducts(int start, int size, List<int> productIds);
 
-        List<Food> SearchAddedFoods(int userId, string searchName, int startId, int size);
+        List<Food> SearchAddedFoods(int userId, string searchName, int start, int size);
 
-        List<Food> SearchLikeFoods(int userId, string searchName, int startId, int size);
+        List<Food> SearchLikeFoods(int userId, string searchName, int start, int size);
 
-        List<Food> SearchRecommendedFoods(int userId, string searchName, int startId, int size);
+        List<Food> SearchRecommendedFoods(int userId, string searchName, int start, int size);
     }
 }
