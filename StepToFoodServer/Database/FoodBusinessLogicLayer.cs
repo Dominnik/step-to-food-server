@@ -267,6 +267,9 @@ namespace StepToFoodServer.Database
 
         private void SetProducts(Food food)
         {
+            if (food == null)
+                return;
+
             food.Products = productRepository
                 .Filter(product => product.ProductFoods.Any(elem => elem.FoodId == food.Id))
                 .ToList();
