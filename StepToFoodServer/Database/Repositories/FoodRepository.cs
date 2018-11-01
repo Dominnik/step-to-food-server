@@ -45,9 +45,9 @@ namespace StepToFoodServer.Repositories
             context.SaveChanges();
         }
 
-        public List<Food> Filter(Expression<Func<Food, bool>> predicate)
+        public List<Food> Filter(Func<Food, bool> predicate)
         {
-            return context.Foods.Where(predicate).ToList();
+            return GetAll().Where(predicate).ToList();
         }
     }
 }

@@ -1,15 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using StepToFoodServer.Database;
+using StepToFoodServer.Extensions;
 using StepToFoodServer.Models;
+using StepToFoodServer.Models.Binds;
 using StepToFoodServer.Repositories;
 using StepToFoodServer.Response;
+using StepToFoodServer.Utils;
 
 namespace StepToFoodServer.Controllers
 {
@@ -34,6 +39,7 @@ namespace StepToFoodServer.Controllers
                 int userId = int.Parse(Request.Query["userId"]);
                 User user = userRepository.Get(userId);
                 user.Token = null;
+                user.Avatar = ImageLink.GetUserAvatarLink(user.Id);
                 response = new BaseResponse<User>(user);
             }
             catch (Exception ex)
@@ -44,27 +50,35 @@ namespace StepToFoodServer.Controllers
         }
 
         [HttpPost("register")]
-        public BaseResponse<int> Register([FromBody]string name, [FromBody]string login, [FromBody]string password)
+        public BaseResponse<int> Register(FormDataCollection form)
         {
             BaseResponse<int> response = null;
             try
             {
-                businessLogicLayer.Register(name, login, password);
-                response = new BaseResponse<int>(0);
+                string name = form.Name;
+                string login = form.Login;
+                string password = form.Password;
+
+                int userId = businessLogicLayer.Register(name, login, password);
+                response = new BaseResponse<int>(userId);
             }
             catch (Exception ex)
             {
                 response = new BaseResponse<int> { Error = ex.Message };
             }
+            Login(form);
             return response;
         }
 
         [HttpPost("login")]
-        public BaseResponse<User> Login([FromBody]string login, [FromBody]string password)
+        public BaseResponse<User> Login(FormDataCollection form)
         {
             BaseResponse<User> response = null;
             try
             {
+                string login = form.Login;
+                string password = form.Password;
+
                 User user = businessLogicLayer.Login(login, password);
                 response = new BaseResponse<User>(user);
             }
@@ -76,11 +90,12 @@ namespace StepToFoodServer.Controllers
         }
 
         [HttpPost("check")]
-        public BaseResponse<User> Check([FromBody]string token)
+        public BaseResponse<User> Check(FormDataCollection form)
         {
             BaseResponse<User> response = null;
             try
             {
+                string token = form.Token;
                 User user = businessLogicLayer.Check(token);
                 response = new BaseResponse<User>(user);
             }
@@ -92,11 +107,13 @@ namespace StepToFoodServer.Controllers
         }
 
         [HttpPost("update/password")]
-        public BaseResponse<int> ChangePassword([FromBody]string password, [FromBody]string newPassword)
+        public BaseResponse<int> ChangePassword(FormDataCollection form)
         {
             BaseResponse<int> response = null;
             try
             {
+                string password = form.Password;
+                string newPassword = form.NewPassword;
                 string token = Request.Headers["Auth"];
                 businessLogicLayer.ChangePassword(token, password, newPassword);
                 response = new BaseResponse<int>(0);
@@ -126,15 +143,15 @@ namespace StepToFoodServer.Controllers
         }
 
         [HttpPost("update/name")]
-        public BaseResponse<int> Update([FromBody]string name)
+        public BaseResponse<int> Update(FormDataCollection form)
         {
             BaseResponse<int> response = null;
             try
             {
+                string name = form.Name;
                 string token = Request.Headers["Auth"];
-                User user = userRepository.Filter(elem => elem.Token == token).Single();
-                if (user == null)
-                    throw new UnauthorizedAccessException("Invalid security token");
+                User user = businessLogicLayer.Check(token);
+
                 user.Name = name;
                 userRepository.Update(user);
                 response = new BaseResponse<int>(0);
@@ -147,39 +164,34 @@ namespace StepToFoodServer.Controllers
         }
 
         [HttpGet("get/avatar")]
-        public BaseResponse<FileContentResult> GetAvatar()
+        public ActionResult GetAvatar()
         {
-            BaseResponse<FileContentResult> response = null;
+            ActionResult response = null;
             try
             {
                 int userId = int.Parse(Request.Query["userId"]);
-                byte[] avatar = Convert.FromBase64String(userRepository.Get(userId).Avatar);
-                response = new BaseResponse<FileContentResult>(File(avatar, "image/jpeg"));
+                string avatarString = userRepository.Get(userId).Avatar;
+                byte[] avatar = Convert.FromBase64String(avatarString ?? "");
+                response = File(avatar, "image/jpeg");
             }
-            catch (Exception ex)
+            catch
             {
-                response = new BaseResponse<FileContentResult> { Error = ex.Message };
+                response = new NoContentResult();
             }
             return response;
         }
 
-        [HttpGet("set/avatar")]
+        [HttpPost("set/avatar")]
         public BaseResponse<int> SetAvatar()
         {
             BaseResponse<int> response = null;
             try
             {
                 string token = Request.Headers["Auth"];
-                User user = userRepository.Filter(elem => elem.Token == token).Single();
-                if (user == null)
-                    throw new UnauthorizedAccessException("Invalid security token");
+                User user = businessLogicLayer.Check(token);
 
-                string link = Request.Query["uri"];
-                using (WebClient webClient = new WebClient())
-                {
-                    byte[] image = webClient.DownloadData(link);
-                    user.Avatar = Convert.ToBase64String(image);
-                }
+                IFormFile file = Request.Form.Files[0];
+                user.Avatar = file.ToBase64String();
                 userRepository.Update(user);
                 response = new BaseResponse<int>(0);
             }

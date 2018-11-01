@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Proxies;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StepToFoodServer.Database;
@@ -29,7 +30,7 @@ namespace StepToFoodServer
             services.AddSingleton<IFoodConfiguration, LikeFoodConfiguration>();
 
             var connection = Configuration["Sqlite:Connection"];
-            services.AddDbContext<FoodContext>(options => options.UseSqlite(connection));
+            services.AddDbContext<FoodContext>(options => options.UseLazyLoadingProxies().UseSqlite(connection));
             
             services.AddScoped(typeof(IRepository<User>), typeof(UserRepository));
             services.AddScoped(typeof(IRepository<Food>), typeof(FoodRepository));

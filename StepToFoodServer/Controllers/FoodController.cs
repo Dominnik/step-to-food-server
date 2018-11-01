@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using StepToFoodServer.Database;
+using StepToFoodServer.Extensions;
 using StepToFoodServer.Models;
 using StepToFoodServer.Repositories;
 using StepToFoodServer.Response;
@@ -30,7 +32,7 @@ namespace StepToFoodServer.Controllers
             this.businessLogicLayer = businessLogicLayer;
             this.foodRepository = foodRepository;
         }
-        
+
         [HttpGet]
         public BaseResponse<Food> Get()
         {
@@ -49,23 +51,6 @@ namespace StepToFoodServer.Controllers
             return response;
         }
 
-        [HttpGet("get/image")]
-        public BaseResponse<FileContentResult> GetImage()
-        {
-            BaseResponse<FileContentResult> response = null;
-            try
-            {
-                int foodId = int.Parse(Request.Query["foodId"]);
-                byte[] image = Convert.FromBase64String(foodRepository.Get(foodId).Image);
-                response = new BaseResponse<FileContentResult>(File(image, "image/jpeg"));
-            }
-            catch (Exception ex)
-            {
-                response = new BaseResponse<FileContentResult> { Error = ex.Message };
-            }
-            return response;
-        }
-
         [HttpPost("add")]
         public BaseResponse<int> Add([FromBody]Food food)
         {
@@ -75,8 +60,8 @@ namespace StepToFoodServer.Controllers
                 string token = Request.Headers["Auth"];
                 User user = businessLogicLayer.Check(token);
 
-                businessLogicLayer.AddFoodWithProducts(user, food);
-                response = new BaseResponse<int>(0);
+                int foodId = businessLogicLayer.AddFoodWithProducts(user, food);
+                response = new BaseResponse<int>(foodId);
             }
             catch (Exception ex)
             {
@@ -92,31 +77,13 @@ namespace StepToFoodServer.Controllers
             try
             {
                 string token = Request.Headers["Auth"];
-                businessLogicLayer.Check(token);
-
                 int foodId = int.Parse(Request.Query["foodId"]);
-                foodRepository.Delete(foodId);
-                response = new BaseResponse<int>(0);
-            }
-            catch (Exception ex)
-            {
-                response = new BaseResponse<int> { Error = ex.Message };
-            }
-            return response;
-        }
-
-        [HttpGet("like")]
-        public BaseResponse<int> Like()
-        {
-            BaseResponse<int> response = null;
-            try
-            {
-                string token = Request.Headers["Auth"];
                 User user = businessLogicLayer.Check(token);
+                Food food = foodRepository.Get(foodId);
+                if (user.Id != food.Author.Id)
+                    throw new MethodAccessException("Removing other people's recipes is not available");
 
-                int foodId = int.Parse(Request.Query["foodId"]);
-                bool hasLike = bool.Parse(Request.Query["hasLike"]);
-                businessLogicLayer.LikeForFood(user, foodId, hasLike);
+                foodRepository.Delete(foodId);
                 response = new BaseResponse<int>(0);
             }
             catch (Exception ex)
@@ -143,6 +110,70 @@ namespace StepToFoodServer.Controllers
                     food.Image = Convert.ToBase64String(image);
                 }
                 businessLogicLayer.UpdateFoodWithProducts(food);
+                response = new BaseResponse<int>(0);
+            }
+            catch (Exception ex)
+            {
+                response = new BaseResponse<int> { Error = ex.Message };
+            }
+            return response;
+        }
+
+        [HttpGet("get/image")]
+        public ActionResult GetImage()
+        {
+            ActionResult response = null;
+            try
+            {
+                int foodId = int.Parse(Request.Query["foodId"]);
+                string imageString = foodRepository.Get(foodId).Image;
+                byte[] image = Convert.FromBase64String(imageString ?? "");
+                response = File(image, "image/jpeg");
+            }
+            catch
+            {
+                response = new NoContentResult();
+            }
+            return response;
+        }
+
+        [HttpPost("set/image")]
+        public BaseResponse<int> SetImage()
+        {
+            BaseResponse<int> response = null;
+            try
+            {
+                string token = Request.Headers["Auth"];
+                int foodId = int.Parse(Request.Query["foodId"]);
+                User user = businessLogicLayer.Check(token);
+                Food food = foodRepository.Get(foodId);
+                if (user.Id != food.Author.Id)
+                    throw new MethodAccessException("Updating other people's recipes is not available");
+
+                IFormFile file = Request.Form.Files[0];
+                food.Image = file.ToBase64String();
+                foodRepository.Update(food);
+                response = new BaseResponse<int>(0);
+            }
+            catch (Exception ex)
+            {
+                response = new BaseResponse<int> { Error = ex.Message };
+            }
+            return response;
+        }
+
+        [HttpGet("like")]
+        public BaseResponse<int> Like()
+        {
+            BaseResponse<int> response = null;
+            try
+            {
+                string token = Request.Headers["Auth"];
+                User user = businessLogicLayer.Check(token);
+
+                int foodId = int.Parse(Request.Query["foodId"]);
+                bool hasLike = bool.Parse(Request.Query["hasLike"]);
+                businessLogicLayer.LikeForFood(user, foodId, hasLike);
                 response = new BaseResponse<int>(0);
             }
             catch (Exception ex)

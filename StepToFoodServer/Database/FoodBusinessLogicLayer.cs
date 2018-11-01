@@ -1,5 +1,6 @@
 ﻿using StepToFoodServer.Models;
 using StepToFoodServer.Repositories;
+using StepToFoodServer.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,24 +10,31 @@ namespace StepToFoodServer.Database
 {
     public class FoodBusinessLogicLayer : IBusinessLogicLayer
     {
+        private readonly FoodContext context;
         private readonly IRepository<Food> foodRepository;
         private readonly IRepository<User> userRepository;
         private readonly IRepository<Product> productRepository;
 
-        public FoodBusinessLogicLayer(IRepository<Food> foodRepository, IRepository<User> userRepository, IRepository<Product> productRepository)
+        public FoodBusinessLogicLayer(
+            FoodContext context,
+            IRepository<Food> foodRepository, 
+            IRepository<User> userRepository, 
+            IRepository<Product> productRepository)
         {
+            this.context = context;
             this.foodRepository = foodRepository;
             this.userRepository = userRepository;
             this.productRepository = productRepository;
         }
 
-        public void Register(string name, string login, string password)
+        public int Register(string name, string login, string password)
         {
             if (LoginExists(login))
                 throw new ArgumentException("User with this login exists");
             
             User user = new User(name, login, password);
             userRepository.Add(user);
+            return user.Id;
         }
 
         public User Login(string login, string password)
@@ -52,7 +60,7 @@ namespace StepToFoodServer.Database
                 .First();
 
             if (user == null)
-                throw new ArgumentException("wrong login or password");
+                throw new UnauthorizedAccessException("Invalid security token");
 
             user.AddedFoods = null;
             user.Avatar = null;
@@ -61,13 +69,7 @@ namespace StepToFoodServer.Database
 
         public void ChangePassword(string token, string password, string newPassword)
         {
-            User user = userRepository
-                .Filter(elem => elem.Token == token)
-                .First();
-
-            if (user == null)
-                throw new ArgumentException("wrong login or password");
-
+            User user = Check(token);
             if (user.Password != password)
                 throw new ArgumentException("wrong current password");
 
@@ -91,39 +93,45 @@ namespace StepToFoodServer.Database
         public List<Product> FindProductsByFood(int foodId)
         {
             List<Product> products = productRepository
-                .Filter(elem => elem.ProductFoods.Any(food => food.FoodId == foodId))
+                .Filter(elem => elem.ProductFoods.Any(productFood => productFood.FoodId == foodId))
                 .ToList();
 
+            foreach(var product in products)
+            {
+                product.Weight = product.ProductFoods
+                    .Where(productFood => productFood.FoodId == foodId)
+                    .Single().Weight;
+            }
             return products;
         }
 
         public List<Product> FindProductsByName(string name)
         {
-            List<Product> products = productRepository
-                .Filter(elem => elem.Name.Contains(name))
+            return productRepository
+                .Filter(elem => elem.Name.ToLower().Contains(name.ToLower()))
                 .ToList();
-
-            return products;
         }
 
         public Food FoodWithProducts(int foodId)
         {
             Food food = foodRepository.Get(foodId);
+            food.Image = ImageLink.GetFoodImageLink(food.Id);
             SetProducts(food);
             return food;
         }
 
-        public void AddFoodWithProducts(User user, Food food)
+        public int AddFoodWithProducts(User user, Food food)
         {
+            food.Author = user;
+            foodRepository.Add(food);
             foreach (Product product in food.Products)
             {
-                ProductFood productFood = new ProductFood(product, food);
-                food.ProductFoods.Add(productFood);
-                //product.ProductFoods.Add(productFood);
+                Product productFromDb = productRepository.Get(product.Id);
+                ProductFood productFood = new ProductFood(productFromDb, food, (int)product.Weight);
+                context.ProductFoods.Add(productFood);
             }
-            food.Author = user;
-            //user.AddedFoods.Add(food);
-            foodRepository.Add(food);
+            context.SaveChanges();
+            return food.Id;
         }
 
         public void UpdateFoodWithProducts(Food food)
@@ -146,17 +154,16 @@ namespace StepToFoodServer.Database
             if (hasLike)
             {
                 LikeFood likeFood = new LikeFood(user, food);
-                user.LikeFoods.Add(likeFood);
-                //food.LikeFoods.Add(likeFood);
-                userRepository.Add(user);
+                context.LikeFoods.Add(likeFood);
             }
             else
             {
                 LikeFood likeFood = user.LikeFoods
                     .Where(elem => elem.FoodId == foodId)
                     .Single();
-                user.LikeFoods.Remove(likeFood);
+                context.LikeFoods.Remove(likeFood);
             }
+            context.SaveChanges();
         }
 
         public List<Food> FindFoodsByProducts(int start, int size, List<int> productIds)
@@ -168,24 +175,31 @@ namespace StepToFoodServer.Database
                 foreach (var product in food.Products)
                     product.IncludedInSearch = productIds.Contains(product.Id);
             }
-            return foods
-                .OrderBy(food => -food.Products.Where(product => (bool)product.IncludedInSearch).Count())
-                .ThenBy(food => food.Products.Where(product => !(bool)product.IncludedInSearch).Count())
-                .Skip(start)
-                .Take(size)
-                .ToList();
+            foods = foods
+               .OrderBy(food => -food.Products.Where(product => (bool)product.IncludedInSearch).Count())
+               .ThenBy(food => food.Products.Where(product => !(bool)product.IncludedInSearch).Count())
+               .Skip(start)
+               .Take(size)
+               .ToList();
+
+            foreach (var food in foods)
+                food.Image = ImageLink.GetFoodImageLink(food.Id);
+            return foods;
         }
 
         public List<Food> SearchAddedFoods(int userId, string searchName, int start, int size)
         {
             List<Food> foods = foodRepository
                 .Filter(food => food != null && food.Author.Id == userId && food.Name.Contains(searchName))
-                .Skip(start)
+                .Skip(start).ToList()
                 .Take(size)
                 .ToList();
 
             foreach (var food in foods)
+            {
+                food.Image = ImageLink.GetFoodImageLink(food.Id);
                 SetProducts(food);
+            }
             return foods;
         }
         
@@ -198,7 +212,10 @@ namespace StepToFoodServer.Database
                 .ToList();
 
             foreach (var food in foods)
+            {
+                food.Image = ImageLink.GetFoodImageLink(food.Id);
                 SetProducts(food);
+            }
             return foods;
         }
 
@@ -210,7 +227,10 @@ namespace StepToFoodServer.Database
 
             foods = foods.Skip(start).Take(size).ToList();
             foreach (var food in foods)
+            {
+                food.Image = ImageLink.GetFoodImageLink(food.Id);
                 SetProducts(food);
+            }
 
             return foods;
         }
@@ -270,9 +290,7 @@ namespace StepToFoodServer.Database
             if (food == null)
                 return;
 
-            food.Products = productRepository
-                .Filter(product => product.ProductFoods.Any(elem => elem.FoodId == food.Id))
-                .ToList();
+            food.Products = FindProductsByFood(food.Id);
         }
 
         private void SetProductFoods(Food food)
@@ -286,7 +304,7 @@ namespace StepToFoodServer.Database
                     .Single();
 
                 productFoods.Add(productFood == null ? 
-                    new ProductFood(productFromDb, food) : productFood);
+                    new ProductFood(productFromDb, food, (int)product.Weight) : productFood);
             }
             food.ProductFoods = productFoods;
         }

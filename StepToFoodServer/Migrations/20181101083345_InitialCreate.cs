@@ -1,6 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
-using System;
-using System.Collections.Generic;
 
 namespace StepToFoodServer.Migrations
 {
@@ -14,8 +12,7 @@ namespace StepToFoodServer.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(nullable: true),
-                    Weight = table.Column<int>(nullable: false)
+                    Name = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -28,10 +25,10 @@ namespace StepToFoodServer.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Avatar = table.Column<string>(nullable: true),
-                    Login = table.Column<string>(nullable: true),
                     Name = table.Column<string>(nullable: true),
+                    Login = table.Column<string>(nullable: true),
                     Password = table.Column<string>(nullable: true),
+                    Avatar = table.Column<string>(nullable: true),
                     Token = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
@@ -45,14 +42,14 @@ namespace StepToFoodServer.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    AuthorId = table.Column<int>(nullable: true),
-                    Calorie = table.Column<double>(nullable: false),
-                    Carbohydrates = table.Column<double>(nullable: false),
-                    Description = table.Column<string>(nullable: true),
-                    Fat = table.Column<double>(nullable: false),
-                    Image = table.Column<string>(nullable: true),
                     Name = table.Column<string>(nullable: true),
-                    Protein = table.Column<double>(nullable: false)
+                    Image = table.Column<string>(nullable: true),
+                    Description = table.Column<string>(nullable: true),
+                    Calorie = table.Column<double>(nullable: false),
+                    Protein = table.Column<double>(nullable: false),
+                    Fat = table.Column<double>(nullable: false),
+                    Carbohydrates = table.Column<double>(nullable: false),
+                    AuthorId = table.Column<int>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -66,7 +63,7 @@ namespace StepToFoodServer.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "LikeFood",
+                name: "LikeFoods",
                 columns: table => new
                 {
                     UserId = table.Column<int>(nullable: false),
@@ -74,15 +71,15 @@ namespace StepToFoodServer.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_LikeFood", x => new { x.UserId, x.FoodId });
+                    table.PrimaryKey("PK_LikeFoods", x => new { x.UserId, x.FoodId });
                     table.ForeignKey(
-                        name: "FK_LikeFood_Foods_FoodId",
+                        name: "FK_LikeFoods_Foods_FoodId",
                         column: x => x.FoodId,
                         principalTable: "Foods",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_LikeFood_Users_UserId",
+                        name: "FK_LikeFoods_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -90,23 +87,24 @@ namespace StepToFoodServer.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProductFood",
+                name: "ProductFoods",
                 columns: table => new
                 {
                     ProductId = table.Column<int>(nullable: false),
-                    FoodId = table.Column<int>(nullable: false)
+                    FoodId = table.Column<int>(nullable: false),
+                    Weight = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProductFood", x => new { x.ProductId, x.FoodId });
+                    table.PrimaryKey("PK_ProductFoods", x => new { x.ProductId, x.FoodId });
                     table.ForeignKey(
-                        name: "FK_ProductFood_Foods_FoodId",
+                        name: "FK_ProductFoods_Foods_FoodId",
                         column: x => x.FoodId,
                         principalTable: "Foods",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ProductFood_Products_ProductId",
+                        name: "FK_ProductFoods_Products_ProductId",
                         column: x => x.ProductId,
                         principalTable: "Products",
                         principalColumn: "Id",
@@ -119,23 +117,23 @@ namespace StepToFoodServer.Migrations
                 column: "AuthorId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_LikeFood_FoodId",
-                table: "LikeFood",
+                name: "IX_LikeFoods_FoodId",
+                table: "LikeFoods",
                 column: "FoodId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProductFood_FoodId",
-                table: "ProductFood",
+                name: "IX_ProductFoods_FoodId",
+                table: "ProductFoods",
                 column: "FoodId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "LikeFood");
+                name: "LikeFoods");
 
             migrationBuilder.DropTable(
-                name: "ProductFood");
+                name: "ProductFoods");
 
             migrationBuilder.DropTable(
                 name: "Foods");

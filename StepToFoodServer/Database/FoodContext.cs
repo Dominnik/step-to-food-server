@@ -10,6 +10,8 @@ namespace StepToFoodServer
         public DbSet<User> Users { get; set; }
         public DbSet<Food> Foods { get; set; }
         public DbSet<Product> Products { get; set; }
+        public DbSet<ProductFood> ProductFoods { get; set; }
+        public DbSet<LikeFood> LikeFoods { get; set; }
 
         private readonly IEnumerable<IFoodConfiguration> configurations;
 

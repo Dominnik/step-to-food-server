@@ -13,12 +13,12 @@ namespace StepToFoodServer.Repositories
 
         T Get(long id);
 
-        void Add(T user);
+        void Add(T entity);
 
-        void Update(T user);
+        void Update(T entity);
 
         void Delete(long id);
 
-        List<T> Filter(Expression<Func<T, bool>> predicate);
+        List<T> Filter(Func<T, bool> predicate);
     }
 }

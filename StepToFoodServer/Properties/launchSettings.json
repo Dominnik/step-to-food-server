@@ -11,7 +11,7 @@
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
-      "launchUrl": "api/food",
+      "launchUrl": "food?foodId=0",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -19,11 +19,16 @@
     "StepToFoodServer": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "api/food",
+      "launchUrl": "food?foodId=0",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "applicationUrl": "http://localhost:55870/"
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "launchBrowser": true,
+      "launchUrl": "{Scheme}://localhost:{ServicePort}"
     }
   }
 }

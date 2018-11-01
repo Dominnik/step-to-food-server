@@ -23,10 +23,10 @@ namespace StepToFoodServer.Models
         public string Token { get; set; }
 
         [JsonIgnore]
-        public ICollection<Food> AddedFoods { get; set; }
+        public virtual ICollection<Food> AddedFoods { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public ICollection<LikeFood> LikeFoods { get; set; }
+        public virtual ICollection<LikeFood> LikeFoods { get; set; }
 
         public User() { }
 

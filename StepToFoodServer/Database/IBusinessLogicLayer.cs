@@ -8,7 +8,7 @@ namespace StepToFoodServer.Database
 {
     public interface IBusinessLogicLayer
     {
-        void Register(string name, string login, string password);
+        int Register(string name, string login, string password);
 
         User Login(string login, string password);
 
@@ -24,7 +24,7 @@ namespace StepToFoodServer.Database
 
         Food FoodWithProducts(int foodId);
 
-        void AddFoodWithProducts(User user, Food food);
+        int AddFoodWithProducts(User user, Food food);
 
         void LikeForFood(User user, int foodId, bool hasLike);
 

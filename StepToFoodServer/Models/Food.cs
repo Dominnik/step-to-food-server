@@ -17,13 +17,13 @@ namespace StepToFoodServer.Models
         public double Protein { get; set; }
         public double Fat { get; set; }
         public double Carbohydrates { get; set; }
-        public User Author { get; set; }
+        public virtual User Author { get; set; }
 
         [JsonIgnore]
-        public ICollection<ProductFood> ProductFoods { get; set; }
+        public virtual ICollection<ProductFood> ProductFoods { get; set; }
 
         [JsonIgnore]
-        public ICollection<LikeFood> LikeFoods { get; set; }
+        public virtual ICollection<LikeFood> LikeFoods { get; set; }
 
         [NotMapped]
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
