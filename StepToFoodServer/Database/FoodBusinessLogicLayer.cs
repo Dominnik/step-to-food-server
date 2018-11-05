@@ -45,9 +45,11 @@ namespace StepToFoodServer.Database
 
             if (user == null)
                 throw new ArgumentException("wrong login or password");
-            user.Token = TokenGenerator.Generate();
-            userRepository.Update(user);
-
+            if (user.Token == null)
+            {
+                user.Token = TokenGenerator.Generate();
+                userRepository.Update(user);
+            }
             user.AddedFoods = null;
             user.Avatar = null;
             return user;
@@ -55,9 +57,7 @@ namespace StepToFoodServer.Database
 
         public User Check(string token)
         {
-            User user = userRepository
-                .Filter(elem => elem.Token == token)
-                .First();
+            User user = UserByToken(token);
 
             if (user == null)
                 throw new UnauthorizedAccessException("Invalid security token");
@@ -112,11 +112,15 @@ namespace StepToFoodServer.Database
                 .ToList();
         }
 
-        public Food FoodWithProducts(int foodId)
+        public Food FoodWithProducts(string token, int foodId)
         {
             Food food = foodRepository.Get(foodId);
-            food.Image = ImageLink.GetFoodImageLink(food.Id);
+            SetImageLinks(food);
             SetProducts(food);
+
+            User user = UserByToken(token);
+            if (user != null)
+                food.HasYourLike = HasLike(user.Id, food.Id);
             return food;
         }
 
@@ -166,7 +170,7 @@ namespace StepToFoodServer.Database
             context.SaveChanges();
         }
 
-        public List<Food> FindFoodsByProducts(int start, int size, List<int> productIds)
+        public List<Food> FindFoodsByProducts(string token, int start, int size, List<int> productIds)
         {
             List<Food> foods = foodRepository.Filter(food => FoodContainsAnyProduct(food, productIds));
             foreach (var food in foods)
@@ -182,12 +186,17 @@ namespace StepToFoodServer.Database
                .Take(size)
                .ToList();
 
+            User user = UserByToken(token);
             foreach (var food in foods)
-                food.Image = ImageLink.GetFoodImageLink(food.Id);
+            {
+                SetImageLinks(food);
+                if (user != null)
+                    food.HasYourLike = HasLike(user.Id, food.Id);
+            }
             return foods;
         }
 
-        public List<Food> SearchAddedFoods(int userId, string searchName, int start, int size)
+        public List<Food> SearchAddedFoods(string token, int userId, string searchName, int start, int size)
         {
             List<Food> foods = foodRepository
                 .Filter(food => food != null && food.Author.Id == userId && food.Name.Contains(searchName))
@@ -195,15 +204,18 @@ namespace StepToFoodServer.Database
                 .Take(size)
                 .ToList();
 
+            User user = UserByToken(token);
             foreach (var food in foods)
             {
-                food.Image = ImageLink.GetFoodImageLink(food.Id);
+                SetImageLinks(food);
                 SetProducts(food);
+                if (user != null)
+                    food.HasYourLike = HasLike(user.Id, food.Id);
             }
             return foods;
         }
         
-        public List<Food> SearchLikeFoods(int userId, string searchName, int start, int size)
+        public List<Food> SearchLikeFoods(string token, int userId, string searchName, int start, int size)
         {
             List<Food> foods = foodRepository
                 .Filter(food => UserPutLikeFood(userId, food) && food.Name.Contains(searchName))
@@ -211,25 +223,31 @@ namespace StepToFoodServer.Database
                 .Take(size)
                 .ToList();
 
+            User user = UserByToken(token);
             foreach (var food in foods)
             {
-                food.Image = ImageLink.GetFoodImageLink(food.Id);
+                SetImageLinks(food);
                 SetProducts(food);
+                if (user != null)
+                    food.HasYourLike = HasLike(user.Id, food.Id);
             }
             return foods;
         }
 
-        public List<Food> SearchRecommendedFoods(int userId, string searchName, int start, int size)
+        public List<Food> SearchRecommendedFoods(string token, int userId, string searchName, int start, int size)
         {
             List<Food> foods = RecommendedFoodsExists(userId) ?
                 GetRecommendedFoods(userId, searchName) : 
                 foodRepository.Filter(food => food.Name.Contains(searchName));
-
             foods = foods.Skip(start).Take(size).ToList();
+
+            User user = UserByToken(token);
             foreach (var food in foods)
             {
-                food.Image = ImageLink.GetFoodImageLink(food.Id);
+                SetImageLinks(food);
                 SetProducts(food);
+                if (user != null)
+                    food.HasYourLike = HasLike(user.Id, food.Id);
             }
 
             return foods;
@@ -280,9 +298,38 @@ namespace StepToFoodServer.Database
             return GetRecommendedFoods(userId, "").Count != 0;
         }
 
+        private bool HasLike(int userId, int foodId)
+        {
+            return context.LikeFoods.Any(elem => elem.UserId == userId && elem.FoodId == foodId);
+        }
+
         private List<Food> LikeFoods(int userId)
         {
             return foodRepository.Filter(food => food.LikeFoods.Any(likeFood => likeFood.User.Id == userId));
+        }
+
+        private void SetImageLinks(Food food)
+        {
+            if (food.Image != null)
+                food.Image = ImageLink.GetFoodImageLink(food.Id);
+            SetImageLinks(food.Author);
+        }
+
+        private User UserByToken(string token)
+        {
+            if (token == null)
+                return null;
+
+            return userRepository
+                .Filter(elem => elem.Token == token)
+                .SingleOrDefault();
+        }
+
+        private void SetImageLinks(User user)
+        {
+            if (user.Avatar != null)
+                user.Avatar = ImageLink.GetUserAvatarLink(user.Id);
+
         }
 
         private void SetProducts(Food food)

@@ -25,7 +25,7 @@ namespace StepToFoodServer.Models
         [JsonIgnore]
         public virtual ICollection<Food> AddedFoods { get; set; }
 
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        [JsonIgnore]
         public virtual ICollection<LikeFood> LikeFoods { get; set; }
 
         public User() { }

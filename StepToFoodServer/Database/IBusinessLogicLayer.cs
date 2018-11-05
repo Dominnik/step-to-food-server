@@ -22,7 +22,7 @@ namespace StepToFoodServer.Database
 
         List<Product> FindProductsByName(string name);
 
-        Food FoodWithProducts(int foodId);
+        Food FoodWithProducts(string token, int foodId);
 
         int AddFoodWithProducts(User user, Food food);
 
@@ -30,12 +30,12 @@ namespace StepToFoodServer.Database
 
         void UpdateFoodWithProducts(Food food);
 
-        List<Food> FindFoodsByProducts(int start, int size, List<int> productIds);
+        List<Food> FindFoodsByProducts(string token, int start, int size, List<int> productIds);
 
-        List<Food> SearchAddedFoods(int userId, string searchName, int start, int size);
+        List<Food> SearchAddedFoods(string token, int userId, string searchName, int start, int size);
 
-        List<Food> SearchLikeFoods(int userId, string searchName, int start, int size);
+        List<Food> SearchLikeFoods(string token, int userId, string searchName, int start, int size);
 
-        List<Food> SearchRecommendedFoods(int userId, string searchName, int start, int size);
+        List<Food> SearchRecommendedFoods(string token, int userId, string searchName, int start, int size);
     }
 }

@@ -23,7 +23,9 @@ namespace StepToFoodServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
+            services.AddMvc().AddJsonOptions(
+                options => options.SerializerSettings.ReferenceLoopHandling = 
+                Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
             services.AddSingleton<IFoodConfiguration, AuthorFoodConfiguration>();
             services.AddSingleton<IFoodConfiguration, ProductFoodConfiguration>();
@@ -31,7 +33,7 @@ namespace StepToFoodServer
 
             var connection = Configuration["Sqlite:Connection"];
             services.AddDbContext<FoodContext>(options => options.UseLazyLoadingProxies().UseSqlite(connection));
-            
+
             services.AddScoped(typeof(IRepository<User>), typeof(UserRepository));
             services.AddScoped(typeof(IRepository<Food>), typeof(FoodRepository));
             services.AddScoped(typeof(IRepository<Product>), typeof(ProductRepository));
