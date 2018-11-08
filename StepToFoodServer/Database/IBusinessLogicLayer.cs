@@ -24,9 +24,9 @@ namespace StepToFoodServer.Database
 
         Food FoodWithProducts(string token, int foodId);
 
-        int AddFoodWithProducts(User user, Food food);
+        int AddFoodWithProducts(int userId, Food food);
 
-        void LikeForFood(User user, int foodId, bool hasLike);
+        void LikeForFood(int userId, int foodId, bool hasLike);
 
         void UpdateFoodWithProducts(Food food);
 

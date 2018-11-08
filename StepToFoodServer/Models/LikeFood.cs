@@ -9,13 +9,10 @@
 
         public LikeFood() { }
 
-        public LikeFood(User user, Food food)
+        public LikeFood(int userId, int foodId)
         {
-            User = user;
-            Food = food;
-
-            UserId = user.Id;
-            FoodId = food.Id;
+            UserId = userId;
+            FoodId = foodId;
         }
     }
 }

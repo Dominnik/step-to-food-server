@@ -50,21 +50,15 @@ namespace StepToFoodServer.Database
                 user.Token = TokenGenerator.Generate();
                 userRepository.Update(user);
             }
-            user.AddedFoods = null;
-            user.Avatar = null;
-            return user;
+            return GetClone(user);
         }
 
         public User Check(string token)
         {
             User user = UserByToken(token);
-
             if (user == null)
                 throw new UnauthorizedAccessException("Invalid security token");
-
-            user.AddedFoods = null;
-            user.Avatar = null;
-            return user;
+            return GetClone(user);
         }
 
         public void ChangePassword(string token, string password, string newPassword)
@@ -124,8 +118,9 @@ namespace StepToFoodServer.Database
             return food;
         }
 
-        public int AddFoodWithProducts(User user, Food food)
+        public int AddFoodWithProducts(int userId, Food food)
         {
+            User user = userRepository.Get(userId);
             food.Author = user;
             foodRepository.Add(food);
             foreach (Product product in food.Products)
@@ -152,18 +147,17 @@ namespace StepToFoodServer.Database
             SetProductFoods(foodFromDb);
         }
 
-        public void LikeForFood(User user, int foodId, bool hasLike)
+        public void LikeForFood(int userId, int foodId, bool hasLike)
         {
-            Food food = foodRepository.Get(foodId);
             if (hasLike)
             {
-                LikeFood likeFood = new LikeFood(user, food);
+                LikeFood likeFood = new LikeFood(userId, foodId);
                 context.LikeFoods.Add(likeFood);
             }
             else
             {
-                LikeFood likeFood = user.LikeFoods
-                    .Where(elem => elem.FoodId == foodId)
+                LikeFood likeFood = context.LikeFoods
+                    .Where(elem => elem.FoodId == foodId && elem.UserId == userId)
                     .Single();
                 context.LikeFoods.Remove(likeFood);
             }
@@ -354,6 +348,14 @@ namespace StepToFoodServer.Database
                     new ProductFood(productFromDb, food, (int)product.Weight) : productFood);
             }
             food.ProductFoods = productFoods;
+        }
+
+        private User GetClone(User user)
+        {
+            User clone = user.Clone();
+            clone.AddedFoods = null;
+            clone.Avatar = null;
+            return clone;
         }
     }
 }

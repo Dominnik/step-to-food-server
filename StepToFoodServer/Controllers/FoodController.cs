@@ -61,7 +61,7 @@ namespace StepToFoodServer.Controllers
                 string token = Request.Headers["Auth"];
                 User user = businessLogicLayer.Check(token);
 
-                int foodId = businessLogicLayer.AddFoodWithProducts(user, food);
+                int foodId = businessLogicLayer.AddFoodWithProducts(user.Id, food);
                 response = new BaseResponse<int>(foodId);
             }
             catch (Exception ex)
@@ -174,7 +174,7 @@ namespace StepToFoodServer.Controllers
 
                 int foodId = int.Parse(Request.Query["foodId"]);
                 bool hasLike = bool.Parse(Request.Query["hasLike"]);
-                businessLogicLayer.LikeForFood(user, foodId, hasLike);
+                businessLogicLayer.LikeForFood(user.Id, foodId, hasLike);
                 response = new BaseResponse<int>(0);
             }
             catch (Exception ex)
