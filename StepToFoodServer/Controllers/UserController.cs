@@ -38,6 +38,8 @@ namespace StepToFoodServer.Controllers
             {
                 int userId = int.Parse(Request.Query["userId"]);
                 User user = userRepository.Get(userId);
+                user = user.Clone();
+
                 user.Token = null;
                 user.Avatar = ImageLink.GetUserAvatarLink(user.Id);
                 response = new BaseResponse<User>(user);
@@ -151,6 +153,7 @@ namespace StepToFoodServer.Controllers
                 string name = form.Name;
                 string token = Request.Headers["Auth"];
                 User user = businessLogicLayer.Check(token);
+                user = userRepository.Get(user.Id);
 
                 user.Name = name;
                 userRepository.Update(user);
@@ -189,6 +192,7 @@ namespace StepToFoodServer.Controllers
             {
                 string token = Request.Headers["Auth"];
                 User user = businessLogicLayer.Check(token);
+                user = userRepository.Get(user.Id);
 
                 IFormFile file = Request.Form.Files[0];
                 user.Avatar = file.ToBase64String();
